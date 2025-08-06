@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -70,7 +71,7 @@ export default function Dashboard() {
         ...asset,
         name: details?.name || asset.ticker,
         currentPrice: asset.purchasePrice,
-        logoUrl: details?.branding?.icon_url,
+        logoUrl: details?.branding?.icon_url || null,
       };
       const newId = await addAssetToFirestore(newAsset);
       setPortfolio([...portfolio, { ...newAsset, id: newId }]);
