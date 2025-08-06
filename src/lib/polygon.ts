@@ -4,7 +4,7 @@
 import "server-only";
 
 const POLYGON_API_KEY = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-const BANXICO_API_TOKEN = process.env.NEXT_PUBLIC_BANXICO_API_TOKEN;
+const BANXICO_API_TOKEN = process.env.BANXICO_API_TOKEN;
 
 
 if (!POLYGON_API_KEY) {
