@@ -26,7 +26,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface EditAssetFormProps {
-  asset: Pick<Stock, 'id' | 'ticker' | 'name' | 'quantity' | 'purchasePrice' | 'purchaseDate'>;
+  asset: Pick<Stock, 'id' | 'ticker' | 'name' | 'quantity' | 'purchasePrice' | 'purchaseDate' | 'originalPurchasePrice' | 'originalCurrency'>;
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (values: Pick<Stock, 'id' | 'quantity' | 'purchasePrice' | 'purchaseDate'>) => void;
@@ -42,7 +42,7 @@ export function EditAssetForm({ asset, isOpen, onClose, onSubmit }: EditAssetFor
     if (asset) {
       form.reset({
         quantity: asset.quantity,
-        purchasePrice: asset.purchasePrice,
+        purchasePrice: asset.originalPurchasePrice ?? asset.purchasePrice,
         purchaseDate: new Date(asset.purchaseDate),
       });
     }
@@ -63,7 +63,7 @@ export function EditAssetForm({ asset, isOpen, onClose, onSubmit }: EditAssetFor
         <DialogHeader>
           <DialogTitle>Editar {asset.name} ({asset.ticker})</DialogTitle>
           <DialogDescription>
-            Actualiza los detalles de tu activo.
+            Actualiza los detalles de tu activo. El precio de compra debe estar en {asset.originalCurrency || 'USD'}.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -86,7 +86,7 @@ export function EditAssetForm({ asset, isOpen, onClose, onSubmit }: EditAssetFor
               name="purchasePrice"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Precio de Compra</FormLabel>
+                  <FormLabel>Precio de Compra ({asset.originalCurrency || 'USD'})</FormLabel>
                   <FormControl>
                     <Input type="number" step="0.01" placeholder="0.00" {...field} />
                   </FormControl>

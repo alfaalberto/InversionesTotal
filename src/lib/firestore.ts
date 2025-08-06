@@ -12,7 +12,13 @@ async function addInitialPortfolioToFirestore(): Promise<void> {
     const batch = writeBatch(db);
     rawInitialPortfolioData.forEach(assetData => {
       const docRef = doc(portfolioCollectionRef);
-      batch.set(docRef, { ...assetData, currentPrice: assetData.purchasePrice });
+      const data = {
+        ...assetData,
+        currentPrice: assetData.purchasePrice,
+        originalPurchasePrice: assetData.purchasePrice,
+        originalCurrency: assetData.currency,
+      };
+      batch.set(docRef, data);
     });
     await batch.commit();
     console.log('Initial portfolio has been added to Firestore.');
@@ -50,7 +56,7 @@ export async function addAssetToFirestore(asset: Omit<Stock, 'id'>): Promise<str
   }
 }
 
-export async function updateAssetInFirestore(id: string, dataToUpdate: Partial<Omit<Stock, 'id'>>): Promise<void> {
+export async function updateAssetInFirestore(id: string, dataToUpdate: Partial<Omit<Stock, 'id' | 'originalCurrency'>>): Promise<void> {
     try {
         const assetDoc = doc(db, 'portfolio', id);
         await updateDoc(assetDoc, dataToUpdate);

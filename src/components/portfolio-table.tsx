@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -41,23 +42,13 @@ import {
 import { EditAssetForm } from './edit-asset-form';
 import Image from 'next/image';
 
-type PortfolioTableRow = {
-  id: string;
-  ticker: string;
-  name: string;
-  currency: 'USD' | 'MXN';
-  quantity: number;
-  purchasePrice: number;
-  currentPrice: number;
+type PortfolioTableRow = Stock & {
   currentValue: number;
   pnl: number;
   pnlPercent: number;
   portfolioShare: number;
   purchaseValue: number;
-  purchaseDate: string;
-  logoUrl?: string;
   costBasis: number;
-  originalCurrency?: 'USD' | 'MXN';
 };
 
 const formatCurrency = (value: number, currency: 'USD' | 'MXN') => {
@@ -70,7 +61,7 @@ const formatCurrency = (value: number, currency: 'USD' | 'MXN') => {
 };
 
 export const columns = (
-  onEdit: (asset: Pick<Stock, 'id' | 'ticker' | 'name' | 'quantity' | 'purchasePrice' | 'purchaseDate'>) => void,
+  onEdit: (asset: PortfolioTableRow) => void,
   onDelete: (assetId: string) => void
 ): ColumnDef<PortfolioTableRow>[] => [
   {
@@ -295,7 +286,7 @@ export const columns = (
 interface PortfolioTableProps {
   data: PortfolioTableRow[];
   onAddAsset: (
-    asset: Omit<Stock, 'id' | 'exchange' | 'currentPrice' | 'logoUrl' | 'name'>
+    asset: Omit<Stock, 'id' | 'currentPrice' | 'logoUrl' | 'name'>
   ) => void;
   onEditAsset: (
     asset: Pick<Stock, 'id' | 'quantity' | 'purchasePrice' | 'purchaseDate'>
@@ -314,10 +305,7 @@ export function PortfolioTable({
   const [
     editingAsset,
     setEditingAsset,
-  ] = React.useState<Pick<
-    Stock,
-    'id' | 'ticker' | 'name' | 'quantity' | 'purchasePrice' | 'purchaseDate'
-  > | null>(null);
+  ] = React.useState<PortfolioTableRow | null>(null);
 
   const tableColumns = React.useMemo(
     () => columns(setEditingAsset, onDeleteAsset),
@@ -354,7 +342,7 @@ export function PortfolioTable({
           <CardTitle className="font-headline">Activos del Portafolio</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="relative w-full overflow-auto rounded-md border">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map(headerGroup => (

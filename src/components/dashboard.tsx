@@ -7,8 +7,8 @@ import {
   addAssetToFirestore,
   updateAssetInFirestore,
   deleteAssetFromFirestore,
-  Stock,
 } from '@/lib/firestore';
+import type { Stock } from '@/lib/data';
 import {
   getTickerDetails,
   getTickerPrice,
@@ -35,20 +35,20 @@ export default function Dashboard() {
     const fetchPortfolio = async () => {
       setIsLoading(true);
       const initialPortfolio = await getPortfolioFromFirestore();
-      setPortfolio(initialPortfolio);
-      setIsLoading(false);
 
       const portfolioWithDetails = await Promise.all(
         initialPortfolio.map(async (asset) => {
           try {
-            const details = await getTickerDetails(asset.ticker);
-            const currentPrice = await getTickerPrice(asset.ticker);
-            const logoUrl = details?.branding?.icon_url;
+            const [details, currentPrice] = await Promise.all([
+                getTickerDetails(asset.ticker),
+                getTickerPrice(asset.ticker)
+            ]);
+            
             return {
               ...asset,
               name: details?.name || asset.name,
               currentPrice: currentPrice || asset.currentPrice,
-              logoUrl,
+              logoUrl: details?.branding?.icon_url,
             };
           } catch (error) {
             console.error(`Error fetching details for ${asset.ticker}`, error);
@@ -57,6 +57,7 @@ export default function Dashboard() {
         })
       );
       setPortfolio(portfolioWithDetails);
+      setIsLoading(false);
     };
 
     fetchPortfolio();
@@ -85,7 +86,7 @@ export default function Dashboard() {
         }
       }
 
-      const newAsset: Omit<Stock, 'id'> = {
+      const newAssetData: Omit<Stock, 'id'> = {
         ...asset,
         purchasePrice: purchasePriceInUSD,
         currency: 'USD',
@@ -96,8 +97,8 @@ export default function Dashboard() {
         originalCurrency,
       };
 
-      const newId = await addAssetToFirestore(newAsset);
-      setPortfolio([...portfolio, { ...newAsset, id: newId }]);
+      const newId = await addAssetToFirestore(newAssetData);
+      setPortfolio([...portfolio, { ...newAssetData, id: newId }]);
 
     } catch (error) {
       console.error('Error adding asset:', error);
@@ -112,15 +113,27 @@ export default function Dashboard() {
   const handleEditAsset = async (
     asset: Pick<Stock, 'id' | 'quantity' | 'purchasePrice' | 'purchaseDate'>
   ) => {
-    await updateAssetInFirestore(asset.id, asset);
+    await updateAssetInFirestore(asset.id, {
+        quantity: asset.quantity,
+        purchasePrice: asset.purchasePrice,
+        purchaseDate: asset.purchaseDate,
+    });
     setPortfolio(
       portfolio.map((p) => (p.id === asset.id ? { ...p, ...asset } : p))
     );
+     toast({
+        title: 'Activo Actualizado',
+        description: 'Los cambios en el activo se han guardado correctamente.',
+     });
   };
 
   const handleDeleteAsset = async (assetId: string) => {
     await deleteAssetFromFirestore(assetId);
     setPortfolio(portfolio.filter((p) => p.id !== assetId));
+    toast({
+        title: 'Activo Eliminado',
+        description: 'El activo se ha eliminado de tu portafolio.',
+    });
   };
 
   const handleAnalysis = async (input: { portfolioData: string, portfolioImages: string[] }) => {
