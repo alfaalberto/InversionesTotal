@@ -4,7 +4,7 @@
 import "server-only";
 
 const POLYGON_API_KEY = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-const BANXICO_API_TOKEN = process.env.BANXICO_API_TOKEN;
+const BANXICO_API_TOKEN = process.env.NEXT_PUBLIC_BANXICO_API_TOKEN;
 
 
 if (!POLYGON_API_KEY) {
@@ -152,10 +152,12 @@ export async function getTickerPrice(ticker: string): Promise<number | null> {
 }
 
 export async function getExchangeRate(from: string, to: string, date: string): Promise<number | null> {
-    if (from !== 'MXN' || to !== 'USD' || !BANXICO_API_TOKEN) {
-        if (from === 'MXN' && to === 'USD' && !BANXICO_API_TOKEN) {
-             console.error('Banxico API token is required for MXN/USD exchange rate.');
-        }
+    if (from !== 'MXN' || to !== 'USD') {
+        return null;
+    }
+    
+    if (!BANXICO_API_TOKEN) {
+        console.error('Banxico API token is required for MXN/USD exchange rate.');
         return null;
     }
 
