@@ -56,6 +56,8 @@ type PortfolioTableRow = {
   purchaseValue: number;
   purchaseDate: string;
   logoUrl?: string;
+  costBasis: number;
+  originalCurrency?: 'USD' | 'MXN';
 };
 
 const formatCurrency = (value: number, currency: 'USD' | 'MXN') => {
@@ -145,7 +147,7 @@ export const columns = (
     ),
   },
   {
-    accessorKey: "purchaseValue",
+    accessorKey: "costBasis",
     header: ({ column }) => {
       return (
         <Button
@@ -153,12 +155,12 @@ export const columns = (
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="text-right w-full"
         >
-          Total de Movimiento
+          Costo Total
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
     },
-    cell: ({ row }) => <div className="text-right">{formatCurrency(row.original.purchaseValue, row.original.currency)}</div>,
+    cell: ({ row }) => <div className="text-right">{formatCurrency(row.original.costBasis, row.original.originalCurrency ?? row.original.currency)}</div>,
   },
   {
     accessorKey: 'currentValue',
@@ -176,7 +178,7 @@ export const columns = (
     },
     cell: ({ row }) => (
       <div className="text-right">
-        {formatCurrency(row.original.currentValue, row.original.currency)}
+        {formatCurrency(row.original.currentValue, 'USD')}
       </div>
     ),
   },
@@ -202,7 +204,7 @@ export const columns = (
             isPositive ? 'text-green-600' : 'text-red-600'
           }`}
         >
-          {formatCurrency(row.original.pnl, row.original.currency)}
+          {formatCurrency(row.original.pnl, 'USD')}
         </div>
       );
     },

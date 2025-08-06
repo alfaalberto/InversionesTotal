@@ -63,23 +63,23 @@ export default function Dashboard() {
   }, []);
 
   const handleAddAsset = async (
-    asset: Omit<Stock, 'id' | 'currentPrice' | 'logoUrl'>
+    asset: Omit<Stock, 'id' | 'currentPrice' | 'logoUrl' | 'name'>
   ) => {
     try {
       const details = await getTickerDetails(asset.ticker);
       
       let purchasePriceInUSD = asset.purchasePrice;
-      let finalCurrency: 'USD' | 'MXN' = asset.currency;
+      const originalPurchasePrice = asset.purchasePrice;
+      const originalCurrency = asset.currency;
 
       if (asset.currency === 'MXN') {
         const rate = await getExchangeRate('MXN', 'USD', asset.purchaseDate);
         if (rate) {
           purchasePriceInUSD = asset.purchasePrice / rate;
-          finalCurrency = 'USD';
         } else {
             toast({
                 title: 'Error de Conversión',
-                description: 'No se pudo obtener el tipo de cambio. El activo se guardará en MXN.',
+                description: 'No se pudo obtener el tipo de cambio. El activo se guardará en USD con el precio original.',
                 variant: 'destructive',
             });
         }
@@ -88,10 +88,12 @@ export default function Dashboard() {
       const newAsset: Omit<Stock, 'id'> = {
         ...asset,
         purchasePrice: purchasePriceInUSD,
-        currency: finalCurrency,
+        currency: 'USD',
         name: details?.name || asset.ticker,
         currentPrice: purchasePriceInUSD, // Assume current price is purchase price initially
         logoUrl: details?.branding?.icon_url || null,
+        originalPurchasePrice,
+        originalCurrency,
       };
 
       const newId = await addAssetToFirestore(newAsset);
@@ -158,6 +160,8 @@ export default function Dashboard() {
     const pnlPercent = purchaseValue > 0 ? (pnl / purchaseValue) * 100 : 0;
     const portfolioShare =
       totalCurrentValue > 0 ? (currentValue / totalCurrentValue) * 100 : 0;
+    
+    const costBasis = (asset.originalPurchasePrice ?? asset.purchasePrice) * asset.quantity;
 
     return {
       ...asset,
@@ -166,6 +170,7 @@ export default function Dashboard() {
       pnl,
       pnlPercent,
       portfolioShare,
+      costBasis
     };
   });
 

@@ -5,10 +5,12 @@ export type Stock = {
   exchange: 'NASDAQ' | 'NYSE' | 'BMV' | 'OTCM';
   currency: 'USD' | 'MXN';
   quantity: number;
-  purchasePrice: number;
+  purchasePrice: number; // This will always be in USD after conversion
   currentPrice: number;
   purchaseDate: string;
   logoUrl?: string;
+  originalPurchasePrice?: number;
+  originalCurrency?: 'USD' | 'MXN';
 };
 
 export type PortfolioData = Stock[];
