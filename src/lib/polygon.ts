@@ -153,7 +153,6 @@ export async function getTickerPrice(ticker: string): Promise<number | null> {
 
 export async function getExchangeRate(from: string, to: string, date: string): Promise<number | null> {
     if (from !== 'MXN' || to !== 'USD' || !BANXICO_API_TOKEN) {
-        // This function now only supports MXN to USD with a Banxico token
         if (from === 'MXN' && to === 'USD' && !BANXICO_API_TOKEN) {
              console.error('Banxico API token is required for MXN/USD exchange rate.');
         }
@@ -165,7 +164,7 @@ export async function getExchangeRate(from: string, to: string, date: string): P
         const formattedDate = date.split('T')[0];
 
         const response = await fetch(
-            `httpshttps://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/${formattedDate}/${formattedDate}`, {
+            `https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/${formattedDate}/${formattedDate}`, {
                 headers: {
                     'Bmx-Token': BANXICO_API_TOKEN,
                 }
