@@ -67,14 +67,36 @@ export default function Dashboard() {
   ) => {
     try {
       const details = await getTickerDetails(asset.ticker);
+      
+      let purchasePriceInUSD = asset.purchasePrice;
+      let finalCurrency: 'USD' | 'MXN' = asset.currency;
+
+      if (asset.currency === 'MXN') {
+        const rate = await getExchangeRate('MXN', 'USD', asset.purchaseDate);
+        if (rate) {
+          purchasePriceInUSD = asset.purchasePrice / rate;
+          finalCurrency = 'USD';
+        } else {
+            toast({
+                title: 'Error de Conversión',
+                description: 'No se pudo obtener el tipo de cambio. El activo se guardará en MXN.',
+                variant: 'destructive',
+            });
+        }
+      }
+
       const newAsset: Omit<Stock, 'id'> = {
         ...asset,
+        purchasePrice: purchasePriceInUSD,
+        currency: finalCurrency,
         name: details?.name || asset.ticker,
-        currentPrice: asset.purchasePrice,
+        currentPrice: purchasePriceInUSD, // Assume current price is purchase price initially
         logoUrl: details?.branding?.icon_url || null,
       };
+
       const newId = await addAssetToFirestore(newAsset);
       setPortfolio([...portfolio, { ...newAsset, id: newId }]);
+
     } catch (error) {
       console.error('Error adding asset:', error);
       toast({
