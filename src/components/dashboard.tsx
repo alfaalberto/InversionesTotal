@@ -1,14 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { useAuth } from '@/lib/firebase';
 import {
-  getPortfolio,
-  addAsset,
-  updateAsset,
-  deleteAsset,
+  getPortfolioFromFirestore,
+  addAssetToFirestore,
+  updateAssetInFirestore,
+  deleteAssetFromFirestore,
   Stock,
-} from '@/lib/data';
+} from '@/lib/firestore';
 import {
   getTickerDetails,
   getTickerPrice,
@@ -17,15 +16,14 @@ import {
 import { PortfolioTable } from '@/components/portfolio-table';
 import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PnlBarChart } from './pnl-bar-chart';
-import { PortfolioAnalysisForm } from './portfolio-analysis-form';
-import { runPortfolioAnalysis } from '@/app/actions';
 import { AnalysisReport } from './analysis-report';
 import { useToast } from '@/hooks/use-toast';
 import { ExchangeRateChart } from './exchange-rate-chart';
 import { StockHistoryChart } from './stock-history-chart';
+import { portfolioAnalysis } from '@/ai/flows/portfolio-analysis';
+import { PortfolioAnalysisForm } from './portfolio-analysis-form';
 
-export function Dashboard() {
-  const { user, loading: authLoading } = useAuth();
+export default function Dashboard() {
   const [portfolio, setPortfolio] = React.useState<Stock[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [analysisReport, setAnalysisReport] = React.useState<any | null>(null);
@@ -33,51 +31,78 @@ export function Dashboard() {
   const { toast } = useToast();
 
   React.useEffect(() => {
-    if (user) {
-      const unsubscribe = getPortfolio(user.uid, async (portfolio) => {
-        setIsLoading(true);
-        const portfolioWithDetails = await Promise.all(
-          portfolio.map(async (asset) => {
+    const fetchPortfolio = async () => {
+      setIsLoading(true);
+      const initialPortfolio = await getPortfolioFromFirestore();
+      setPortfolio(initialPortfolio);
+      setIsLoading(false);
+
+      const portfolioWithDetails = await Promise.all(
+        initialPortfolio.map(async (asset) => {
+          try {
             const details = await getTickerDetails(asset.ticker);
             const currentPrice = await getTickerPrice(asset.ticker);
-            const logoUrl = details?.branding?.logo_url;
-            return { ...asset, name: details?.name, currentPrice, logoUrl };
-          })
-        );
-        setPortfolio(portfolioWithDetails);
-        setIsLoading(false);
-      });
-      return () => unsubscribe();
-    }
-  }, [user]);
+            const logoUrl = details?.branding?.icon_url;
+            return {
+              ...asset,
+              name: details?.name || asset.name,
+              currentPrice: currentPrice || asset.currentPrice,
+              logoUrl,
+            };
+          } catch (error) {
+            console.error(`Error fetching details for ${asset.ticker}`, error);
+            return asset;
+          }
+        })
+      );
+      setPortfolio(portfolioWithDetails);
+    };
+
+    fetchPortfolio();
+  }, []);
 
   const handleAddAsset = async (
-    asset: Omit<Stock, 'id' | 'name' | 'exchange' | 'currentPrice' | 'logoUrl'>
+    asset: Omit<Stock, 'id' | 'currentPrice' | 'logoUrl'>
   ) => {
-    if (user) {
-      await addAsset(user.uid, asset);
+    try {
+      const details = await getTickerDetails(asset.ticker);
+      const newAsset: Omit<Stock, 'id'> = {
+        ...asset,
+        name: details?.name || asset.ticker,
+        currentPrice: asset.purchasePrice,
+        logoUrl: details?.branding?.icon_url,
+      };
+      const newId = await addAssetToFirestore(newAsset);
+      setPortfolio([...portfolio, { ...newAsset, id: newId }]);
+    } catch (error) {
+      console.error('Error adding asset:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo agregar el activo.',
+        variant: 'destructive',
+      });
     }
   };
 
   const handleEditAsset = async (
     asset: Pick<Stock, 'id' | 'quantity' | 'purchasePrice' | 'purchaseDate'>
   ) => {
-    if (user) {
-      await updateAsset(user.uid, asset.id, asset);
-    }
+    await updateAssetInFirestore(asset.id, asset);
+    setPortfolio(
+      portfolio.map((p) => (p.id === asset.id ? { ...p, ...asset } : p))
+    );
   };
 
   const handleDeleteAsset = async (assetId: string) => {
-    if (user) {
-      await deleteAsset(user.uid, assetId);
-    }
+    await deleteAssetFromFirestore(assetId);
+    setPortfolio(portfolio.filter((p) => p.id !== assetId));
   };
 
-  const handleAnalysis = async (userInput: string) => {
+  const handleAnalysis = async (input: { portfolioData: string, portfolioImages: string[] }) => {
     setIsAnalysisRunning(true);
     setAnalysisReport(null);
     try {
-      const result = await runPortfolioAnalysis(portfolio, userInput);
+      const result = await portfolioAnalysis(input);
       setAnalysisReport(result);
     } catch (error) {
       console.error('Error running analysis:', error);
@@ -107,8 +132,9 @@ export function Dashboard() {
     const currentValue =
       (asset.currentPrice ?? asset.purchasePrice) * asset.quantity;
     const pnl = currentValue - purchaseValue;
-    const pnlPercent = (pnl / purchaseValue) * 100;
-    const portfolioShare = (currentValue / totalCurrentValue) * 100;
+    const pnlPercent = purchaseValue > 0 ? (pnl / purchaseValue) * 100 : 0;
+    const portfolioShare =
+      totalCurrentValue > 0 ? (currentValue / totalCurrentValue) * 100 : 0;
 
     return {
       ...asset,
@@ -120,37 +146,29 @@ export function Dashboard() {
     };
   });
 
-  if (authLoading) {
-    return <div>Loading...</div>;
-  }
-
   return (
-    <div className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
+    <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <PortfolioPieChart data={tableData} />
         <PnlBarChart data={tableData} />
         <ExchangeRateChart />
-        <StockHistoryChart />
+        <StockHistoryChart tickers={[]} data={{}} />
       </div>
 
-      <PortfolioTable
-        data={tableData}
-        onAddAsset={handleAddAsset}
-        onEditAsset={handleEditAsset}
-        onDeleteAsset={handleDeleteAsset}
-        isLoading={isLoading}
-      />
+      <div className="grid grid-cols-1 gap-4 md:gap-8">
+        <PortfolioTable
+          data={tableData}
+          onAddAsset={handleAddAsset}
+          onEditAsset={handleEditAsset}
+          onDeleteAsset={handleDeleteAsset}
+          isLoading={isLoading}
+        />
+      </div>
 
-      <PortfolioAnalysisForm
-        onSubmit={handleAnalysis}
-        isLoading={isAnalysisRunning}
-      />
-      {isAnalysisRunning && (
-        <div className="flex justify-center items-center">
-          <p>Analizando tu portafolio...</p>
-        </div>
-      )}
-      {analysisReport && <AnalysisReport report={analysisReport} />}
-    </div>
+      <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
+        <PortfolioAnalysisForm onSubmit={handleAnalysis} isLoading={isAnalysisRunning} />
+        <AnalysisReport result={analysisReport} isLoading={isAnalysisRunning} />
+      </div>
+    </main>
   );
 }

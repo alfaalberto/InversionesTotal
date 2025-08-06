@@ -39,6 +39,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { EditAssetForm } from './edit-asset-form';
+import Image from 'next/image';
 
 type PortfolioTableRow = {
   id: string;
@@ -90,10 +91,11 @@ export const columns = (
       return (
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8 text-xs">
-            {logoUrlWithKey && (
-              <AvatarImage src={logoUrlWithKey} alt={row.original.name} />
+            {logoUrlWithKey ? (
+              <Image src={logoUrlWithKey} alt={row.original.name} width={32} height={32} />
+            ) : (
+              <AvatarFallback>{row.original.ticker.charAt(0)}</AvatarFallback>
             )}
-            <AvatarFallback>{row.original.ticker.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="font-medium">
             <div>{row.original.name}</div>
@@ -156,7 +158,7 @@ export const columns = (
         </Button>
       )
     },
-    cell: ({ row }) => <div className="text-right">{formatCurrency(row.original.purchaseValue, 'USD')}</div>,
+    cell: ({ row }) => <div className="text-right">{formatCurrency(row.original.purchaseValue, row.original.currency)}</div>,
   },
   {
     accessorKey: 'currentValue',
