@@ -8,7 +8,7 @@ import {
   deleteAssetFromFirestore,
 } from '@/lib/firestore';
 import type { Stock } from '@/lib/data';
-import { getExchangeRate } from '@/lib/polygon';
+import { getExchangeRate } from '@/lib/banxico';
 import { PortfolioTable } from '@/components/portfolio-table';
 import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PnlBarChart } from './pnl-bar-chart';
@@ -56,7 +56,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
       const originalCurrency = asset.currency;
 
       if (asset.currency === 'MXN') {
-        const rate = await getExchangeRate('MXN', 'USD', asset.purchaseDate);
+        const rate = await getExchangeRate('MXN', 'USD');
         if (rate) {
           purchasePriceInUSD = asset.purchasePrice / rate;
         } else {

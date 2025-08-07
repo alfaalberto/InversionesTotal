@@ -5,8 +5,8 @@ import 'server-only';
 import {
   getTickerDetails,
   getTickerPrice,
-  getExchangeRate,
 } from '@/lib/polygon';
+import { getExchangeRate } from '@/lib/banxico';
 import { Stock } from '@/lib/data';
 import {
   portfolioAnalysis,
