@@ -4,7 +4,7 @@
 import 'server-only';
 import {
   getTickerDetails,
-  getTickerPreviousClose,
+  getTickerPrice,
   getExchangeRate,
 } from '@/lib/polygon';
 import { Stock } from '@/lib/data';
@@ -43,7 +43,7 @@ export async function getEnhancedPortfolioData(
       // Fetches data sequentially to avoid API rate-limiting.
       const [details, price] = await Promise.all([
         getTickerDetails(stock.ticker),
-        getTickerPreviousClose(stock.ticker),
+        getTickerPrice(stock.ticker),
       ]);
       
       const currentPrice = price ?? 0;
