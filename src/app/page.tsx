@@ -23,11 +23,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { LayoutDashboard, Bot, User, Settings, LogOut, Target } from "lucide-react";
 import Dashboard from "@/components/dashboard";
-import { getEnhancedPortfolioData } from "@/app/actions";
-import { rawInitialPortfolioData } from "@/lib/data";
+import { getInitialPortfolioData } from "@/app/actions";
 
 export default async function Home() {
-  const portfolioData = await getEnhancedPortfolioData(rawInitialPortfolioData);
+  const initialPortfolioData = await getInitialPortfolioData();
   
   return (
     <SidebarProvider>
@@ -85,7 +84,7 @@ export default async function Home() {
           <h1 className="text-lg font-semibold md:text-2xl font-headline">Panel de control</h1>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-           <Dashboard initialData={portfolioData} />
+           <Dashboard initialData={initialPortfolioData} />
         </main>
       </SidebarInset>
     </SidebarProvider>

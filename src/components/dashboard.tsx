@@ -18,6 +18,7 @@ import { ExchangeRateChart } from './exchange-rate-chart';
 import { StockHistoryChart } from './stock-history-chart';
 import { portfolioAnalysis } from '@/ai/flows/portfolio-analysis';
 import { PortfolioAnalysisForm } from './portfolio-analysis-form';
+import { getEnhancedPortfolioData } from '@/app/actions';
 
 interface DashboardProps {
   initialData: Stock[];
@@ -25,13 +26,25 @@ interface DashboardProps {
 
 export default function Dashboard({ initialData }: DashboardProps) {
   const [portfolio, setPortfolio] = React.useState<Stock[]>(initialData);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [analysisReport, setAnalysisReport] = React.useState<any | null>(null);
   const [isAnalysisRunning, setIsAnalysisRunning] = React.useState(false);
   const { toast } = useToast();
 
   React.useEffect(() => {
-    setPortfolio(initialData);
+    const fetchEnhancedData = async () => {
+      setIsLoading(true);
+      const enhancedData = await getEnhancedPortfolioData(initialData);
+      setPortfolio(enhancedData);
+      setIsLoading(false);
+    };
+
+    if (initialData.length > 0) {
+      fetchEnhancedData();
+    } else {
+       setIsLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
 
   const handleAddAsset = async (
@@ -59,7 +72,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
       const newAssetData: Omit<Stock, 'id'> = {
         ...asset,
         purchasePrice: purchasePriceInUSD,
-        currency: 'USD',
+        currency: 'USD', // Standardize to USD for internal calculations
         name: asset.ticker, // Name will be fetched on the server
         currentPrice: purchasePriceInUSD, // Assume current price is purchase price initially
         originalPurchasePrice,

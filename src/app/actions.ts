@@ -13,6 +13,7 @@ import {
   PortfolioAnalysisInput,
   PortfolioAnalysisOutput,
 } from '@/ai/flows/portfolio-analysis';
+import { getPortfolioFromFirestore } from '@/lib/firestore';
 
 export async function analyzePortfolioAction(
   input: PortfolioAnalysisInput
@@ -32,14 +33,13 @@ function delay(ms: number) {
 }
 
 export async function getEnhancedPortfolioData(
-  stocks: Omit<Stock, 'id' | 'currentPrice' | 'logoUrl' | 'name'>[]
+  stocks: Stock[]
 ): Promise<Stock[]> {
   try {
+    const enrichedData: Stock[] = [];
     const exchangeRate = await getExchangeRate('MXN', 'USD', new Date().toISOString());
 
-    const enrichedData: Stock[] = [];
-
-    for (const [index, stock] of stocks.entries()) {
+    for (const stock of stocks) {
       // Fetches data sequentially to avoid API rate-limiting.
       const [details, price] = await Promise.all([
         getTickerDetails(stock.ticker),
@@ -49,39 +49,35 @@ export async function getEnhancedPortfolioData(
       const currentPrice = price ?? 0;
 
       let purchasePriceInUSD = stock.purchasePrice;
-      let originalPurchasePrice = stock.purchasePrice;
-      let originalCurrency = stock.currency;
-
-      if (stock.currency === 'MXN' && exchangeRate) {
-        purchasePriceInUSD = stock.purchasePrice / exchangeRate;
-      } else if (stock.currency === 'MXN' && !exchangeRate) {
-        console.warn(`Could not fetch exchange rate for MXN to USD. Asset ${stock.ticker} may have incorrect valuation.`);
-      }
       
+      // If original currency is MXN, we need to convert purchase price for calculations
+      if (stock.originalCurrency === 'MXN' && stock.originalPurchasePrice && exchangeRate) {
+        purchasePriceInUSD = stock.originalPurchasePrice / exchangeRate;
+      }
+
       enrichedData.push({
         ...stock,
-        id: `${stock.ticker}-${index}`,
-        name: details?.name || stock.ticker,
+        name: details?.name || stock.name || stock.ticker,
         currentPrice,
-        purchasePrice: purchasePriceInUSD,
-        originalPurchasePrice,
-        originalCurrency,
+        purchasePrice: purchasePriceInUSD, // This is now consistently in USD for calculations
       });
 
-      // Add a delay to respect the API rate limit (e.g., 5 calls/min on free tier)
-      // A 500ms delay between each stock should help spread out the requests.
-      await delay(500);
+      // Increase delay to be safer with the API rate limit (5 calls/min on free tier)
+      await delay(1000); 
     }
 
     return enrichedData;
   } catch (error) {
     console.error('Error enhancing portfolio data:', error);
-    return stocks.map((stock, index) => ({
+    // Return original stocks if enhancement fails
+    return stocks.map(stock => ({
       ...stock,
-      id: `${stock.ticker}-${index}`,
-      name: stock.ticker,
-      currentPrice: 0,
-      logoUrl: undefined,
+      name: stock.name || stock.ticker,
+      currentPrice: stock.currentPrice || stock.purchasePrice,
     }));
   }
+}
+
+export async function getInitialPortfolioData(): Promise<Stock[]> {
+    return await getPortfolioFromFirestore();
 }

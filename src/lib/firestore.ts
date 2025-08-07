@@ -1,5 +1,6 @@
-'use client';
+'use server';
 
+import 'server-only';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Stock } from './data';
