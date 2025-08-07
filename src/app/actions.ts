@@ -46,7 +46,7 @@ export async function getEnhancedPortfolioData(
         getTickerPrice(stock.ticker),
       ]);
       
-      const currentPrice = price ?? 0;
+      const currentPrice = price ?? stock.currentPrice ?? 0;
 
       let purchasePriceInUSD = stock.purchasePrice;
       
@@ -63,7 +63,7 @@ export async function getEnhancedPortfolioData(
       });
 
       // Increase delay to be safer with the API rate limit (5 calls/min on free tier)
-      await delay(1000); 
+      await delay(12000); 
     }
 
     return enrichedData;

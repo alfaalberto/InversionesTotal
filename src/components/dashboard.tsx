@@ -147,10 +147,6 @@ export default function Dashboard({ initialData }: DashboardProps) {
     }
   };
 
-  const totalPurchaseValue = portfolio.reduce(
-    (acc, asset) => acc + asset.purchasePrice * asset.quantity,
-    0
-  );
   const totalCurrentValue = portfolio.reduce(
     (acc, asset) =>
       acc + (asset.currentPrice ?? asset.purchasePrice) * asset.quantity,
@@ -181,7 +177,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
   });
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+    <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <PortfolioPieChart data={tableData} />
         <PnlBarChart data={tableData} />
@@ -206,6 +202,6 @@ export default function Dashboard({ initialData }: DashboardProps) {
         />
         <AnalysisReport result={analysisReport} isLoading={isAnalysisRunning} />
       </div>
-    </main>
+    </div>
   );
 }
