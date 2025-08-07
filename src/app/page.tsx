@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,8 +23,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { LayoutDashboard, Bot, User, Settings, LogOut, Target } from "lucide-react";
 import Dashboard from "@/components/dashboard";
+import { getEnhancedPortfolioData } from "@/app/actions";
+import { rawInitialPortfolioData } from "@/lib/data";
 
-export default function Home() {
+export default async function Home() {
+  const portfolioData = await getEnhancedPortfolioData(rawInitialPortfolioData);
+  
   return (
     <SidebarProvider>
       <Sidebar side="left" collapsible="icon">
@@ -80,7 +85,7 @@ export default function Home() {
           <h1 className="text-lg font-semibold md:text-2xl font-headline">Panel de control</h1>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-           <Dashboard />
+           <Dashboard initialData={portfolioData} />
         </main>
       </SidebarInset>
     </SidebarProvider>

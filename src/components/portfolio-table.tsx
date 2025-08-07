@@ -78,17 +78,12 @@ export const columns = (
       );
     },
     cell: ({ row }) => {
-      const logoUrlWithKey = row.original.logoUrl
-        ? `${row.original.logoUrl}?apiKey=${process.env.NEXT_PUBLIC_POLYGON_API_KEY}`
-        : undefined;
+      const logoUrl = `https://companiesmarketcap.com/img/company-logos/64/${row.original.ticker}.png`;
       return (
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8 text-xs">
-            {logoUrlWithKey ? (
-              <Image src={logoUrlWithKey} alt={row.original.name} width={32} height={32} />
-            ) : (
-              <AvatarFallback>{row.original.ticker.charAt(0)}</AvatarFallback>
-            )}
+            <AvatarImage src={logoUrl} alt={row.original.name} />
+            <AvatarFallback>{row.original.ticker.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="font-medium">
             <div>{row.original.name}</div>

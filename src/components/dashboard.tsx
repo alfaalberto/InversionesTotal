@@ -3,17 +3,12 @@
 
 import * as React from 'react';
 import {
-  getPortfolioFromFirestore,
   addAssetToFirestore,
   updateAssetInFirestore,
   deleteAssetFromFirestore,
 } from '@/lib/firestore';
 import type { Stock } from '@/lib/data';
-import {
-  getTickerDetails,
-  getTickerPrice,
-  getExchangeRate,
-} from '@/lib/polygon';
+import { getExchangeRate } from '@/lib/polygon';
 import { PortfolioTable } from '@/components/portfolio-table';
 import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PnlBarChart } from './pnl-bar-chart';
@@ -24,51 +19,25 @@ import { StockHistoryChart } from './stock-history-chart';
 import { portfolioAnalysis } from '@/ai/flows/portfolio-analysis';
 import { PortfolioAnalysisForm } from './portfolio-analysis-form';
 
-export default function Dashboard() {
-  const [portfolio, setPortfolio] = React.useState<Stock[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+interface DashboardProps {
+  initialData: Stock[];
+}
+
+export default function Dashboard({ initialData }: DashboardProps) {
+  const [portfolio, setPortfolio] = React.useState<Stock[]>(initialData);
+  const [isLoading, setIsLoading] = React.useState(false);
   const [analysisReport, setAnalysisReport] = React.useState<any | null>(null);
   const [isAnalysisRunning, setIsAnalysisRunning] = React.useState(false);
   const { toast } = useToast();
 
   React.useEffect(() => {
-    const fetchPortfolio = async () => {
-      setIsLoading(true);
-      const initialPortfolio = await getPortfolioFromFirestore();
-
-      const portfolioWithDetails = await Promise.all(
-        initialPortfolio.map(async (asset) => {
-          try {
-            const [details, currentPrice] = await Promise.all([
-                getTickerDetails(asset.ticker),
-                getTickerPrice(asset.ticker)
-            ]);
-            
-            return {
-              ...asset,
-              name: details?.name || asset.name,
-              currentPrice: currentPrice || asset.currentPrice,
-              logoUrl: details?.branding?.icon_url,
-            };
-          } catch (error) {
-            console.error(`Error fetching details for ${asset.ticker}`, error);
-            return asset;
-          }
-        })
-      );
-      setPortfolio(portfolioWithDetails);
-      setIsLoading(false);
-    };
-
-    fetchPortfolio();
-  }, []);
+    setPortfolio(initialData);
+  }, [initialData]);
 
   const handleAddAsset = async (
     asset: Omit<Stock, 'id' | 'currentPrice' | 'logoUrl' | 'name'>
   ) => {
     try {
-      const details = await getTickerDetails(asset.ticker);
-      
       let purchasePriceInUSD = asset.purchasePrice;
       const originalPurchasePrice = asset.purchasePrice;
       const originalCurrency = asset.currency;
@@ -78,11 +47,12 @@ export default function Dashboard() {
         if (rate) {
           purchasePriceInUSD = asset.purchasePrice / rate;
         } else {
-            toast({
-                title: 'Error de Conversión',
-                description: 'No se pudo obtener el tipo de cambio. El activo se guardará en USD con el precio original.',
-                variant: 'destructive',
-            });
+          toast({
+            title: 'Error de Conversión',
+            description:
+              'No se pudo obtener el tipo de cambio. El activo se guardará en USD con el precio original.',
+            variant: 'destructive',
+          });
         }
       }
 
@@ -90,15 +60,20 @@ export default function Dashboard() {
         ...asset,
         purchasePrice: purchasePriceInUSD,
         currency: 'USD',
-        name: details?.name || asset.ticker,
+        name: asset.ticker, // Name will be fetched on the server
         currentPrice: purchasePriceInUSD, // Assume current price is purchase price initially
-        logoUrl: details?.branding?.icon_url || null,
         originalPurchasePrice,
         originalCurrency,
       };
 
       const newId = await addAssetToFirestore(newAssetData);
-      setPortfolio([...portfolio, { ...newAssetData, id: newId }]);
+      // Optimistically update the UI
+      setPortfolio([...portfolio, { ...newAssetData, id: newId, name: asset.ticker, logoUrl: '' }]);
+      
+      // Re-fetch data to get the latest state
+      // This is a simple approach. For better UX, you might want to re-validate the data
+      // using Next.js's revalidation features.
+      window.location.reload();
 
     } catch (error) {
       console.error('Error adding asset:', error);
@@ -114,29 +89,33 @@ export default function Dashboard() {
     asset: Pick<Stock, 'id' | 'quantity' | 'purchasePrice' | 'purchaseDate'>
   ) => {
     await updateAssetInFirestore(asset.id, {
-        quantity: asset.quantity,
-        purchasePrice: asset.purchasePrice,
-        purchaseDate: asset.purchaseDate,
+      quantity: asset.quantity,
+      purchasePrice: asset.purchasePrice,
+      purchaseDate: asset.purchaseDate,
     });
     setPortfolio(
       portfolio.map((p) => (p.id === asset.id ? { ...p, ...asset } : p))
     );
-     toast({
-        title: 'Activo Actualizado',
-        description: 'Los cambios en el activo se han guardado correctamente.',
-     });
+    toast({
+      title: 'Activo Actualizado',
+      description: 'Los cambios en el activo se han guardado correctamente.',
+    });
+    window.location.reload();
   };
 
   const handleDeleteAsset = async (assetId: string) => {
     await deleteAssetFromFirestore(assetId);
     setPortfolio(portfolio.filter((p) => p.id !== assetId));
     toast({
-        title: 'Activo Eliminado',
-        description: 'El activo se ha eliminado de tu portafolio.',
+      title: 'Activo Eliminado',
+      description: 'El activo se ha eliminado de tu portafolio.',
     });
   };
 
-  const handleAnalysis = async (input: { portfolioData: string, portfolioImages: string[] }) => {
+  const handleAnalysis = async (input: {
+    portfolioData: string;
+    portfolioImages: string[];
+  }) => {
     setIsAnalysisRunning(true);
     setAnalysisReport(null);
     try {
@@ -173,8 +152,9 @@ export default function Dashboard() {
     const pnlPercent = purchaseValue > 0 ? (pnl / purchaseValue) * 100 : 0;
     const portfolioShare =
       totalCurrentValue > 0 ? (currentValue / totalCurrentValue) * 100 : 0;
-    
-    const costBasis = (asset.originalPurchasePrice ?? asset.purchasePrice) * asset.quantity;
+
+    const costBasis =
+      (asset.originalPurchasePrice ?? asset.purchasePrice) * asset.quantity;
 
     return {
       ...asset,
@@ -183,7 +163,7 @@ export default function Dashboard() {
       pnl,
       pnlPercent,
       portfolioShare,
-      costBasis
+      costBasis,
     };
   });
 
@@ -207,7 +187,10 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
-        <PortfolioAnalysisForm onSubmit={handleAnalysis} isLoading={isAnalysisRunning} />
+        <PortfolioAnalysisForm
+          onSubmit={handleAnalysis}
+          isLoading={isAnalysisRunning}
+        />
         <AnalysisReport result={analysisReport} isLoading={isAnalysisRunning} />
       </div>
     </main>
