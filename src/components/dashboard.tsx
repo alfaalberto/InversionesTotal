@@ -166,8 +166,8 @@ export default function Dashboard({ initialData }: DashboardProps) {
     const portfolioShare =
       totalCurrentValue > 0 ? (currentValue / totalCurrentValue) * 100 : 0;
 
-    const costBasis =
-      (asset.originalPurchasePrice ?? asset.purchasePrice) * asset.quantity;
+    // costBasis is now always in USD
+    const costBasisUSD = asset.purchasePrice * asset.quantity;
 
     return {
       ...asset,
@@ -176,7 +176,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
       pnl,
       pnlPercent,
       portfolioShare,
-      costBasis,
+      costBasis: costBasisUSD,
     };
   });
 

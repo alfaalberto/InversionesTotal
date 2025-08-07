@@ -146,7 +146,7 @@ export const columns = (
         </Button>
       )
     },
-    cell: ({ row }) => <div className="text-right">{formatCurrency(row.original.costBasis, row.original.originalCurrency ?? row.original.currency)}</div>,
+    cell: ({ row }) => <div className="text-right">{formatCurrency(row.original.costBasis, 'USD')}</div>,
   },
   {
     accessorKey: 'currentValue',
