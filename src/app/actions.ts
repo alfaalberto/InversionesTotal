@@ -37,7 +37,7 @@ export async function getEnhancedPortfolioData(
 ): Promise<Stock[]> {
   try {
     const enrichedData: Stock[] = [];
-    const exchangeRate = await getExchangeRate('MXN', 'USD', new Date().toISOString());
+    const exchangeRate = await getExchangeRate('MXN', 'USD');
 
     for (const stock of stocks) {
       // Fetches data sequentially to avoid API rate-limiting.
@@ -63,7 +63,7 @@ export async function getEnhancedPortfolioData(
       });
 
       // Increase delay to be safer with the API rate limit (5 calls/min on free tier)
-      await delay(12000); 
+      await delay(15000); 
     }
 
     return enrichedData;
