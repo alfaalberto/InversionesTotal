@@ -1,7 +1,7 @@
 
 import Dashboard from "@/components/dashboard";
 import { getInitialPortfolioData } from "@/app/actions";
-import { AppWrapper } from "@/components/app-wrapper";
+import { AppWrapper } from "../components/app-wrapper";
 
 export default async function Home() {
   const initialPortfolioData = await getInitialPortfolioData();

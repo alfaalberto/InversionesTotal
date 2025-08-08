@@ -17,7 +17,7 @@ import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PnlBarChart } from './pnl-bar-chart';
 import { SaveAllButton } from './SaveAllButton';
 import { AnalysisReport } from './AnalysisReport';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "../hooks/use-toast";
 import { ExchangeRateChart } from './exchange-rate-chart';
 import { StockHistoryChart } from './stock-history-chart';
 import { PremiumHistoricalAnalysis } from './premium-historical-analysis';
