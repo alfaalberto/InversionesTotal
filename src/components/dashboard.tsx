@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { DashboardHeader } from '@/components/dashboard-header';
-import { PremiumTabs, PremiumTabContent } from '@/components/premium-tabs';
+import { PremiumTabs, PremiumTabContent } from './premium-tabs';
 import {
   addAssetToFirestore,
   updateAssetInFirestore,
