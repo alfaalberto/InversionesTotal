@@ -4,6 +4,7 @@
 import "server-only";
 
 const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
+console.log("POLYGON_API_KEY:", POLYGON_API_KEY);
 
 if (!POLYGON_API_KEY) {
     console.warn("Polygon API key not found. Company logos will not be fetched.");

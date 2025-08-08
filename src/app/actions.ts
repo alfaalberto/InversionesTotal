@@ -32,50 +32,80 @@ function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+export async function getEnhancedSingleStock(stock: Stock): Promise<Stock> {
+  let exchangeRate = 1;
+  try {
+    if (stock.originalCurrency === 'MXN') {
+      const rate = await getExchangeRate('MXN', 'USD');
+      if (rate && !isNaN(rate)) exchangeRate = rate;
+    }
+  } catch (e) {
+    // Si falla la API de Banxico, seguimos con exchangeRate=1
+  }
+  let details = null;
+  let price = null;
+  try {
+    [details, price] = await Promise.all([
+      getTickerDetails(stock.ticker),
+      getTickerPrice(stock.ticker),
+    ]);
+  } catch (e) {
+    // Si falla la API externa, seguimos usando los datos originales
+  }
+  const currentPrice = (price ?? stock.currentPrice ?? stock.purchasePrice ?? 0);
+  let purchasePriceInUSD = stock.purchasePrice;
+  // Solo convierte si la operación original fue en MXN y solo para este registro
+  if (stock.originalCurrency === 'MXN' && stock.currency === 'MXN') {
+    purchasePriceInUSD = stock.purchasePrice / exchangeRate;
+  }
+  // Si currency ya es USD, no se modifica purchasePrice
+
+  return {
+    ...stock,
+    name: details?.name || stock.name || stock.ticker,
+    currentPrice,
+    purchasePrice: purchasePriceInUSD,
+  };
+}
+
 export async function getEnhancedPortfolioData(
   stocks: Stock[]
 ): Promise<Stock[]> {
+  const enrichedData: Stock[] = [];
+  let exchangeRate = 1;
   try {
-    const enrichedData: Stock[] = [];
-    const exchangeRate = await getExchangeRate('MXN', 'USD');
+    const rate = await getExchangeRate('MXN', 'USD');
+    if (rate && !isNaN(rate)) exchangeRate = rate;
+  } catch (e) {
+    // Si falla la API de Banxico, seguimos con exchangeRate=1
+  }
 
-    for (const stock of stocks) {
-      // Fetches data sequentially to avoid API rate-limiting.
-      const [details, price] = await Promise.all([
+  for (const stock of stocks) {
+    let details = null;
+    let price = null;
+    try {
+      [details, price] = await Promise.all([
         getTickerDetails(stock.ticker),
         getTickerPrice(stock.ticker),
       ]);
-      
-      const currentPrice = price ?? stock.currentPrice ?? 0;
-
-      let purchasePriceInUSD = stock.purchasePrice;
-      
-      // If original currency is MXN, we need to convert purchase price for calculations
-      if (stock.originalCurrency === 'MXN' && stock.originalPurchasePrice && exchangeRate) {
-        purchasePriceInUSD = stock.originalPurchasePrice / exchangeRate;
-      }
-
-      enrichedData.push({
-        ...stock,
-        name: details?.name || stock.name || stock.ticker,
-        currentPrice,
-        purchasePrice: purchasePriceInUSD, // This is now consistently in USD for calculations
-      });
-
-      // Increase delay to be safer with the API rate limit (5 calls/min on free tier)
-      await delay(15000); 
+    } catch (e) {
+      // Si falla la API externa, seguimos usando los datos originales
     }
-
-    return enrichedData;
-  } catch (error) {
-    console.error('Error enhancing portfolio data:', error);
-    // Return original stocks if enhancement fails
-    return stocks.map(stock => ({
+    const currentPrice = (price ?? stock.currentPrice ?? stock.purchasePrice ?? 0);
+    let purchasePriceInUSD = stock.purchasePrice;
+    if (stock.originalCurrency === 'MXN') {
+      purchasePriceInUSD = stock.purchasePrice * exchangeRate;
+    }
+    enrichedData.push({
       ...stock,
-      name: stock.name || stock.ticker,
-      currentPrice: stock.currentPrice || stock.purchasePrice,
-    }));
+      name: details?.name || stock.name || stock.ticker,
+      currentPrice,
+      purchasePrice: purchasePriceInUSD,
+    });
+    // No hacer delay si la API falla, solo si el plan es free y hay éxito
+    await delay(1500); // Reducido para mejor UX
   }
+  return enrichedData;
 }
 
 export async function getInitialPortfolioData(): Promise<Stock[]> {

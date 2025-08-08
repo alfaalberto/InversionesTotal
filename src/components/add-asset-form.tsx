@@ -5,6 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { getExchangeFromTicker } from '@/lib/data';
+import { useState, useRef } from 'react';
+import { fetchCompanyName } from '@/lib/fetchCompanyName';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { CalendarIcon, PlusCircle } from 'lucide-react';
@@ -23,15 +26,19 @@ const formSchema = z.object({
   purchaseDate: z.date({
     required_error: "La fecha de compra es requerida.",
   }),
+  
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface AddAssetFormProps {
-  onAddAsset: (asset: Omit<Stock, 'id' | 'exchange' | 'currentPrice' | 'logoUrl' | 'name'>) => void;
+  onAddAsset: (asset: Omit<Stock, 'id' | 'currentPrice' | 'logoUrl'> & Partial<Pick<Stock, 'name'>>) => void;
 }
 
 export function AddAssetForm({ onAddAsset }: AddAssetFormProps) {
+  const [companyName, setCompanyName] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const lastTickerRef = useRef<string>('');
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,14 +57,23 @@ export function AddAssetForm({ onAddAsset }: AddAssetFormProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
+    let name = companyName;
+    // Si el nombre no se ha buscado, intenta buscarlo ahora
+    if (!name && values.ticker) {
+      setIsSearching(true);
+      name = await fetchCompanyName(values.ticker.toUpperCase());
+      setIsSearching(false);
+    }
     onAddAsset({
       ticker: values.ticker.toUpperCase(),
       quantity: values.quantity,
       purchasePrice: values.purchasePrice,
-      currency: values.currency,
-      purchaseDate: values.purchaseDate.toISOString(),
-    });
+      name: name || values.ticker.toUpperCase(),
+  currency: values.currency,
+  purchaseDate: values.purchaseDate.toISOString(),
+  exchange: getExchangeFromTicker(values.ticker),
+});
     form.reset({
       ticker: '',
       quantity: 0,
@@ -77,7 +93,20 @@ export function AddAssetForm({ onAddAsset }: AddAssetFormProps) {
             <FormItem>
               <FormLabel>Ticker</FormLabel>
               <FormControl>
-                <Input placeholder="Ej. AAPL" {...field} onChange={(e) => field.onChange(e.target.value.toUpperCase())} />
+                <Input placeholder="Ej. AAPL" {...field}
+  onChange={async (e) => {
+    const value = e.target.value.toUpperCase();
+    field.onChange(value);
+    setCompanyName(null);
+    if (value.length >= 1 && value !== lastTickerRef.current) {
+      setIsSearching(true);
+      lastTickerRef.current = value;
+      const name = await fetchCompanyName(value);
+      setCompanyName(name);
+      setIsSearching(false);
+    }
+  }}
+/>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -154,12 +183,12 @@ export function AddAssetForm({ onAddAsset }: AddAssetFormProps) {
           control={form.control}
           name="currency"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="w-full lg:w-32">
               <FormLabel>Moneda</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona una moneda" />
+                    <SelectValue placeholder="Selecciona moneda" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -171,6 +200,7 @@ export function AddAssetForm({ onAddAsset }: AddAssetFormProps) {
             </FormItem>
           )}
         />
+        
         <Button type="submit" className="w-full lg:w-auto">
           <PlusCircle className="mr-2 h-4 w-4" />
           Agregar Activo

@@ -1,7 +1,7 @@
 export type Stock = {
   id: string;
   ticker: string;
-  name: string;
+  name?: string;
   exchange: 'NASDAQ' | 'NYSE' | 'BMV' | 'OTCM';
   currency: 'USD' | 'MXN';
   quantity: number;
@@ -11,9 +11,32 @@ export type Stock = {
   logoUrl?: string;
   originalPurchasePrice?: number;
   originalCurrency?: 'USD' | 'MXN';
+  // Campos para congelar valores
+  isFrozen?: boolean; // Indica si los valores están congelados
+  frozenPrice?: number; // Precio congelado (en USD)
+  frozenDate?: string; // Fecha cuando se congeló el precio
+  frozenSource?: string; // Fuente del precio congelado (polygon/finnhub)
 };
 
 export type PortfolioData = Stock[];
+
+// Detecta el mercado automáticamente según el ticker
+export function getExchangeFromTicker(ticker: string): Stock['exchange'] {
+  const t = ticker.toUpperCase();
+  if (/^(CUERVO\*|BIMBOA|LABB|FEMSAUB|SITES1A-1)$/.test(t) || /^[A-Z0-9]{1,6}$/.test(t) && t.endsWith('A') || t.endsWith('B')) {
+    return 'BMV';
+  }
+  if (/^[A-Z]{1,5}$/.test(t)) {
+    // Ejemplo: AAPL, MSFT, AMD
+    return 'NASDAQ';
+  }
+  if (/^(PFE|TDOC|NIO|SHOP|DIS)$/.test(t)) {
+    return 'NYSE';
+  }
+  // Agrega más reglas según convención de tickers
+  return 'NASDAQ'; // fallback
+}
+
 
 export const rawInitialPortfolioData: Omit<Stock, 'id' | 'currentPrice' | 'logoUrl' | 'name'>[] = [
     { ticker: 'BOTZ', exchange: 'NASDAQ', currency: 'USD', quantity: 5, purchasePrice: 20.34, purchaseDate: '2024-06-17T00:00:00-06:00' },
@@ -62,10 +85,43 @@ export const exchangeRateHistory = [
     { date: 'Jul', rate: 18.20 },
 ]
 
-export const getPortfolioMetrics = (data: PortfolioData) => {
+export function getPortfolioMetrics(data: PortfolioData) {
+  const totalValue = data.reduce((sum, stock) => {
+    // Usar precio congelado si está disponible, sino el precio actual
+    const effectivePrice = stock.isFrozen && stock.frozenPrice ? stock.frozenPrice : stock.currentPrice;
+    return sum + (effectivePrice * stock.quantity);
+  }, 0);
+
+  const totalCost = data.reduce((sum, stock) => {
+    return sum + (stock.purchasePrice * stock.quantity);
+  }, 0);
+
+  const totalPnL = totalValue - totalCost;
+  const totalPnLPercentage = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
+
+  const topPerformer = data.reduce((best, stock) => {
+    const effectiveStockPrice = stock.isFrozen && stock.frozenPrice ? stock.frozenPrice : stock.currentPrice;
+    const effectiveBestPrice = best.isFrozen && best.frozenPrice ? best.frozenPrice : best.currentPrice;
+    
+    const stockPnL = (effectiveStockPrice - stock.purchasePrice) * stock.quantity;
+    const bestPnL = (effectiveBestPrice - best.purchasePrice) * best.quantity;
+    return stockPnL > bestPnL ? stock : best;
+  }, data[0]);
+
+  return {
+    totalValue,
+    totalCost,
+    totalPnL,
+    totalPnLPercentage,
+    topPerformer,
+  };
+}
+
+export const getPortfolioMetricsOld = (data: PortfolioData) => {
     const metrics = data.map(stock => {
         const purchaseValue = stock.quantity * stock.purchasePrice;
-        const currentValue = stock.quantity * stock.currentPrice;
+        const effectivePrice = stock.isFrozen && stock.frozenPrice ? stock.frozenPrice : stock.currentPrice;
+        const currentValue = stock.quantity * effectivePrice;
         const pnl = currentValue - purchaseValue;
         const pnlPercent = purchaseValue > 0 ? (pnl / purchaseValue) * 100 : 0;
         

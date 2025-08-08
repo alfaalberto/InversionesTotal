@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -82,18 +82,51 @@ export function EditAssetForm({ asset, isOpen, onClose, onSubmit }: EditAssetFor
               )}
             />
             <FormField
-              control={form.control}
-              name="purchasePrice"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Precio de Compra ({asset.originalCurrency || 'USD'})</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+  control={form.control}
+  name="purchasePrice"
+  render={({ field }) => {
+    const [exchangeRate, setExchangeRate] = React.useState<number | null>(null);
+    const [convertedUSD, setConvertedUSD] = React.useState<number | null>(null);
+    const [warning, setWarning] = React.useState<string | null>(null);
+    React.useEffect(() => {
+      if (asset.originalCurrency === 'MXN') {
+        fetch('/api/exchange-rate?from=MXN&to=USD')
+          .then(res => res.json())
+          .then(data => {
+            setExchangeRate(data.rate);
+            if (data.rate && field.value) {
+              setConvertedUSD(Number(field.value) / data.rate);
+            }
+          });
+      } else {
+        setExchangeRate(null);
+        setConvertedUSD(null);
+      }
+    }, [field.value, asset.originalCurrency]);
+    React.useEffect(() => {
+      if (asset.originalCurrency !== 'MXN' && field.value > 5000) {
+        setWarning('El precio parece muy alto para USD. ¿Seguro que es correcto?');
+      } else {
+        setWarning(null);
+      }
+    }, [field.value, asset.originalCurrency]);
+    return (
+      <FormItem>
+        <FormLabel>Precio de Compra ({asset.originalCurrency || 'USD'})</FormLabel>
+        <FormControl>
+          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+        </FormControl>
+        {asset.originalCurrency === 'MXN' && exchangeRate && (
+          <div className="text-xs text-muted-foreground mt-1">
+            Equivalente en USD: <b>${convertedUSD ? convertedUSD.toFixed(2) : '0.00'}</b> (T.C. {exchangeRate})
+          </div>
+        )}
+        {warning && <div className="text-xs text-red-600 mt-1">{warning}</div>}
+        <FormMessage />
+      </FormItem>
+    );
+  }}
+/>
             <FormField
               control={form.control}
               name="purchaseDate"
