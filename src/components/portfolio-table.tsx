@@ -21,29 +21,17 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Button } from './ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import type { Stock } from '@/lib/data';
+import type { Stock } from '../lib/data';
 import { AddAssetForm } from './add-asset-form';
 import { format } from 'date-fns';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { EditAssetForm } from './edit-asset-form';
 import Image from 'next/image';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 type PortfolioTableRow = Omit<Stock, 'name'> & {
   name: string;
