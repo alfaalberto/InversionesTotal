@@ -1,5 +1,5 @@
 
-import Dashboard from "@/components/dashboard";
+import Dashboard from "../components/dashboard";
 import { getInitialPortfolioData } from "./actions";
 import { AppWrapper } from "../components/app-wrapper";
 
