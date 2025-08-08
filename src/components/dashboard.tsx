@@ -26,13 +26,13 @@ import { PremiumPortfolioAnalysis } from './premium-portfolio-analysis';
 import { PremiumGraphicsDashboard } from './premium-graphics-dashboard';
 import { useAutoSave } from '../hooks/use-auto-save';
 import { useAutoPriceUpdate } from '../hooks/use-auto-price-update';
-import { getEnhancedPortfolioData } from '@/app/actions';
+import { getEnhancedPortfolioData } from '../app/actions';
 
 interface DashboardProps {
   initialData: Stock[];
 }
 
-import { convertUSDToMXN } from '@/lib/currency';
+import { convertUSDToMXN } from '../lib/currency';
 
 export default function Dashboard({ initialData }: DashboardProps) {
   console.log('🏦 Dashboard component rendered');
@@ -546,7 +546,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
 
       const newId = await addAssetToFirestore(newAssetData);
       // Enriquecer solo el nuevo activo
-      const { getEnhancedSingleStock } = await import('@/app/actions');
+      const { getEnhancedSingleStock } = await import('../app/actions');
       const enriched = await getEnhancedSingleStock({ ...newAssetData, id: newId });
       setPortfolio([...portfolio, enriched]);
 
@@ -571,7 +571,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
       purchaseDate: asset.purchaseDate,
     });
     // Enriquecer solo el activo editado
-    const { getEnhancedSingleStock } = await import('@/app/actions');
+    const { getEnhancedSingleStock } = await import('../app/actions');
     const enriched = await getEnhancedSingleStock({ ...portfolio.find(p => p.id === asset.id)!, ...asset });
     setPortfolio(
       portfolio.map((p) => (p.id === asset.id ? enriched : p))
