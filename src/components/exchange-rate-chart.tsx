@@ -8,15 +8,15 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+} from "./ui/card"
+import { Badge } from "./ui/badge"
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
-import { exchangeRateHistory } from "@/lib/data"
-import type { ChartConfig } from "@/components/ui/chart"
+} from "./ui/chart"
+import { exchangeRateHistory } from "../lib/data"
+import type { ChartConfig } from "./ui/chart"
 
 const chartConfig = {
   rate: {

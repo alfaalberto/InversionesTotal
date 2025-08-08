@@ -4,18 +4,18 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { getExchangeFromTicker } from '@/lib/data';
+import { Button } from './ui/button';
+import { getExchangeFromTicker } from '../lib/data';
 import { useState, useRef } from 'react';
-import { fetchCompanyName } from '@/lib/fetchCompanyName';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { fetchCompanyName } from '../lib/fetchCompanyName';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
+import { Input } from './ui/input';
 import { CalendarIcon, PlusCircle } from 'lucide-react';
-import type { Stock } from '@/lib/data';
+import type { Stock } from '../lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
 import { format } from 'date-fns';
 
 const formSchema = z.object({

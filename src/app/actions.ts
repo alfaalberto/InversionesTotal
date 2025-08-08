@@ -5,14 +5,14 @@ import 'server-only';
 import {
   getTickerDetails,
   getTickerPrice,
-} from '@/lib/polygon';
-import { getExchangeRate } from '@/lib/banxico';
-import { Stock } from '@/lib/data';
+} from '../lib/polygon';
+import { getExchangeRate } from '../lib/banxico';
+import { Stock } from '../lib/data';
 import {
   portfolioAnalysis,
   PortfolioAnalysisInput,
   PortfolioAnalysisOutput,
-} from '@/ai/flows/portfolio-analysis';
+} from '../ai/flows/portfolio-analysis';
 import { getPortfolioFromFirestore } from '../lib/firestore';
 
 export async function analyzePortfolioAction(

@@ -1,8 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from './ui/card';
+import { Skeleton } from './ui/skeleton';
 import { Loader2, TrendingUp } from 'lucide-react';
 
 export function PremiumTableSkeleton() {

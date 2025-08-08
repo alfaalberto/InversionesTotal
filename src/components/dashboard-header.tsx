@@ -2,9 +2,9 @@
 
 import * as React from 'react';
 import { Moon, Sun, TrendingUp, DollarSign, BarChart3, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { Badge } from './ui/badge';
 import { useTheme } from './theme-provider';
 import { SaveAllButton } from './SaveAllButton';
 

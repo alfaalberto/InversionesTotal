@@ -14,10 +14,10 @@ export async function GET(req: NextRequest) {
   try {
     let price: number | null = null;
     if (source === 'polygon') {
-      const { getTickerPrice } = await import('@/lib/polygon');
+      const { getTickerPrice } = await import('../../../lib/polygon');
       price = await getTickerPrice(ticker);
     } else if (source === 'finnhub') {
-      const { getFinnhubPrice } = await import('@/lib/finnhub');
+      const { getFinnhubPrice } = await import('../../../lib/finnhub');
       price = await getFinnhubPrice(ticker);
     }
     if (price && !isNaN(price)) {

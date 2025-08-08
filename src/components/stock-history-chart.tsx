@@ -9,13 +9,13 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card"
+} from "./ui/card"
 import {
     ChartContainer,
     ChartTooltip,
     ChartTooltipContent,
-} from "@/components/ui/chart"
-import type { ChartConfig } from "@/components/ui/chart"
+} from "./ui/chart"
+import type { ChartConfig } from "./ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Badge } from "./ui/badge";
 import { format, subDays, subMonths, subYears } from "date-fns";

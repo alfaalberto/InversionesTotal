@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { 
   PieChart, 
   BarChart3, 
@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Activity
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from './ui/badge';
 
 interface PremiumTabsProps {
   children: React.ReactNode;

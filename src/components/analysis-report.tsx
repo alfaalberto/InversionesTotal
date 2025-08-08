@@ -5,10 +5,10 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
+} from './ui/accordion';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Skeleton } from './ui/skeleton';
-import type { PortfolioAnalysisOutput } from '@/ai/flows/portfolio-analysis';
+import type { PortfolioAnalysisOutput } from '../ai/flows/portfolio-analysis';
 import { Button } from './ui/button';
 import { Download, FileText, CheckCircle, BarChart2, Lightbulb, Bot } from 'lucide-react';
 
