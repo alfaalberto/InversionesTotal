@@ -1,0 +1,11 @@
+{
+  "apphosting": {
+    "source": ".",
+    "ignore": [
+      "node_modules",
+      ".git",
+      ".next",
+      "out"
+    ]
+  }
+}
