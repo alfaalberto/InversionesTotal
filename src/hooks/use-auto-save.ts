@@ -15,8 +15,8 @@ import {
   type ExchangeRateData,
   type UserPreferences,
   type PortfolioSnapshot
-} from '@/lib/comprehensive-firestore';
-import { useToast } from '@/hooks/use-toast';
+} from '../lib/comprehensive-firestore';
+import { useToast } from './use-toast';
 
 interface AutoSaveState {
   isLoading: boolean;

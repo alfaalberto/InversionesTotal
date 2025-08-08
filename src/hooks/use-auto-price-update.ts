@@ -14,8 +14,8 @@ interface Stock {
   originalPurchasePrice?: number;
   lastUpdated?: string;
 }
-import { updatePortfolioPrices } from '@/lib/finnhub-price-service';
-import { useToast } from '@/hooks/use-toast';
+import { updatePortfolioPrices } from '../lib/finnhub-price-service';
+import { useToast } from './use-toast';
 
 interface AutoPriceUpdateState {
   isUpdating: boolean;

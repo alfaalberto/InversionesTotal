@@ -13,7 +13,7 @@ import {
   PortfolioAnalysisInput,
   PortfolioAnalysisOutput,
 } from '@/ai/flows/portfolio-analysis';
-import { getPortfolioFromFirestore } from '@/lib/firestore';
+import { getPortfolioFromFirestore } from '../lib/firestore';
 
 export async function analyzePortfolioAction(
   input: PortfolioAnalysisInput

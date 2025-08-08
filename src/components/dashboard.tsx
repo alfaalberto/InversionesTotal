@@ -2,17 +2,17 @@
 'use client';
 
 import * as React from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { DashboardHeader } from '@/components/dashboard-header';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { DashboardHeader } from './dashboard-header';
 import { PremiumTabs, PremiumTabContent } from './premium-tabs';
 import {
   addAssetToFirestore,
   updateAssetInFirestore,
   deleteAssetFromFirestore,
-} from '@/lib/firestore';
-import type { Stock } from '@/lib/data';
-import { getExchangeRate, getExchangeRateWithInfo, clearExchangeRateCache } from '@/lib/banxico';
-import { PortfolioTable } from '@/components/portfolio-table';
+} from '../lib/firestore';
+import type { Stock } from '../lib/data';
+import { getExchangeRate, getExchangeRateWithInfo, clearExchangeRateCache } from '../lib/banxico';
+import { PortfolioTable } from './portfolio-table';
 import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PnlBarChart } from './pnl-bar-chart';
 import { SaveAllButton } from './SaveAllButton';
@@ -21,11 +21,11 @@ import { useToast } from "../hooks/use-toast";
 import { ExchangeRateChart } from './exchange-rate-chart';
 import { StockHistoryChart } from './stock-history-chart';
 import { PremiumHistoricalAnalysis } from './premium-historical-analysis';
-import { portfolioAnalysis } from '@/ai/flows/portfolio-analysis';
+import { portfolioAnalysis } from '../ai/flows/portfolio-analysis';
 import { PremiumPortfolioAnalysis } from './premium-portfolio-analysis';
 import { PremiumGraphicsDashboard } from './premium-graphics-dashboard';
-import { useAutoSave } from '@/hooks/use-auto-save';
-import { useAutoPriceUpdate } from '@/hooks/use-auto-price-update';
+import { useAutoSave } from '../hooks/use-auto-save';
+import { useAutoPriceUpdate } from '../hooks/use-auto-price-update';
 import { getEnhancedPortfolioData } from '@/app/actions';
 
 interface DashboardProps {
