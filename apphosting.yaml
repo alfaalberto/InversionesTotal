@@ -13,3 +13,28 @@ runConfig:
 env:
   - variable: NODE_ENV
     value: production
+  - variable: BANXICO_API_TOKEN
+    value: "${BANXICO_API_TOKEN}"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: POLYGON_API_KEY
+    value: "${POLYGON_API_KEY}"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_POLYGON_API_KEY
+    value: "${NEXT_PUBLIC_POLYGON_API_KEY}"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: FINNHUB_API_KEY
+    value: "${FINNHUB_API_KEY}"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FINNHUB_API_KEY
+    value: "${NEXT_PUBLIC_FINNHUB_API_KEY}"
+    availability:
+      - BUILD
+      - RUNTIME
