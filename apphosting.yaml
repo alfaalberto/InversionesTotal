@@ -1,6 +1,9 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
+# Force Node.js 22 for better webpack/postcss stability
+runtime: nodejs22
+
 runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
@@ -13,6 +16,10 @@ runConfig:
 env:
   - variable: NODE_ENV
     value: production
+  - variable: NODE_OPTIONS
+    value: --max_old_space_size=4096
+    availability:
+      - BUILD
   - variable: BANXICO_API_TOKEN
     secret: BANXICO_API_TOKEN
     availability:
