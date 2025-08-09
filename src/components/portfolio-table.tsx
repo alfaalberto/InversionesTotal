@@ -454,16 +454,16 @@ export const columns = (
       const effectivePrice = row.original.isFrozen && row.original.frozenPrice 
         ? row.original.frozenPrice 
         : row.original.currentPrice;
-      
-      const currentValue = effectivePrice * row.original.quantity;
-      const displayValue = marketValueCurrency === 'MXN' && exchangeRate 
-        ? currentValue * exchangeRate 
-        : currentValue;
-      
+      // Mantener valor en USD y delegar conversión a FormatMonetaryValue
+      // Si el activo es MXN, convertir precio a USD usando TC
+      const currentValueUSD = (row.original.currency === 'MXN' && exchangeRate)
+        ? (effectivePrice / exchangeRate) * row.original.quantity
+        : effectivePrice * row.original.quantity;
+
       return (
         <div className="flex items-center gap-2">
           <FormatMonetaryValue
-            value={displayValue}
+            value={currentValueUSD}
             displayCurrency={marketValueCurrency}
             exchangeRate={exchangeRate}
             label="Valor de Mercado"
@@ -512,13 +512,21 @@ export const columns = (
       );
     },
     cell: ({ row }) => {
-      console.log('📊 PnL cell render:', { value: row.original.pnl, currency: marketValueCurrency, rate: exchangeRate });
-      const isPositive = row.original.pnl >= 0;
+      // Calcular PnL en USD en tiempo de render, consistente con valor de mercado
+      const effectivePrice = row.original.isFrozen && row.original.frozenPrice
+        ? row.original.frozenPrice
+        : row.original.currentPrice;
+      const currentValueUSD = (row.original.currency === 'MXN' && exchangeRate)
+        ? (effectivePrice / exchangeRate) * row.original.quantity
+        : effectivePrice * row.original.quantity;
+      const pnlUSD = currentValueUSD - row.original.costBasis;
+      console.log('📊 PnL cell render (computed):', { pnlUSD, currency: marketValueCurrency, rate: exchangeRate });
+      const isPositive = pnlUSD >= 0;
       return (
         <div className="w-36 mx-auto text-center">
           <FormatMonetaryValue
             key={`pnl-${marketValueCurrency}-${row.original.id}`}
-            value={row.original.pnl}
+            value={pnlUSD}
             displayCurrency={marketValueCurrency}
             exchangeRate={exchangeRate}
             label="Ganancia/Pérdida"
@@ -676,21 +684,25 @@ export function PortfolioTable({
   const portfolioTotals = React.useMemo(() => {
     const totalCostBasis = data.reduce((sum, asset) => sum + asset.costBasis, 0);
     const totalCurrentValue = data.reduce((sum, asset) => {
-      const effectivePrice = asset.isFrozen && asset.frozenPrice 
-        ? asset.frozenPrice 
+      const effectivePrice = asset.isFrozen && asset.frozenPrice
+        ? asset.frozenPrice
         : asset.currentPrice;
-      return sum + (effectivePrice * asset.quantity);
+      // Normalizar a USD siempre; si el activo es MXN y hay TC, convertir a USD
+      const valueUSD = (asset.currency === 'MXN' && exchangeRate)
+        ? (effectivePrice / exchangeRate) * asset.quantity
+        : effectivePrice * asset.quantity;
+      return sum + valueUSD;
     }, 0);
     const totalPnL = totalCurrentValue - totalCostBasis;
     const totalPnLPercent = totalCostBasis > 0 ? (totalPnL / totalCostBasis) * 100 : 0;
-    
+
     return {
       totalCostBasis,
       totalCurrentValue,
       totalPnL,
-      totalPnLPercent
+      totalPnLPercent,
     };
-  }, [data]);
+  }, [data, exchangeRate]);
 
   // Send calculated totals to dashboard
   React.useEffect(() => {
@@ -748,13 +760,13 @@ export function PortfolioTable({
         </CardHeader>
         <CardContent className="px-6">
           <div className="w-full overflow-x-auto rounded-lg border border-border/50 bg-background/50 backdrop-blur-sm">
-            <Table className="w-full min-w-[1200px]" key={`table-${marketValueCurrencyState}-${exchangeRate}`}>
+            <Table className="w-full min-w-[1200px] rounded-lg" key={`table-${marketValueCurrencyState}-${exchangeRate}`}>
               <TableHeader>
                 {table.getHeaderGroups().map(headerGroup => (
-                  <TableRow key={headerGroup.id}>
+                  <TableRow key={headerGroup.id} className="">
                     {headerGroup.headers.map(header => {
                       return (
-                        <TableHead key={header.id} className="text-center font-semibold text-xs px-3 py-4 bg-muted/50 border-b-2 border-border/20">
+                        <TableHead key={header.id} className="text-center font-semibold text-xs px-3 py-4 bg-muted/50 border-b-2 border-border/20 sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-muted/60">
                           {header.isPlaceholder
                             ? null
                             : flexRender(
@@ -786,11 +798,7 @@ export function PortfolioTable({
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && 'selected'}
-                        className={
-                          highlightedRowId && row.original.id === highlightedRowId
-                            ? 'bg-yellow-100 animate-pulse transition-colors'
-                            : ''
-                        }
+                        className={`transition-colors hover:bg-muted/40 odd:bg-muted/20 ${highlightedRowId && row.original.id === highlightedRowId ? 'ring-2 ring-primary/40 bg-primary/5' : ''}`}
                       >
                         {row.getVisibleCells().map(cell => (
                           <TableCell key={cell.id} className="text-center align-middle px-3 py-3 text-sm border-b border-border/10">
@@ -803,7 +811,7 @@ export function PortfolioTable({
                       </TableRow>
                     ))}
                     {/* Total Row */}
-                    <TableRow className="bg-muted/30 border-t-2 border-primary/20 font-semibold">
+                    <TableRow className="bg-gradient-to-r from-muted/40 via-muted/30 to-muted/40 border-t-2 border-primary/20 font-semibold">
                       <TableCell className="text-center align-middle px-3 py-4 text-sm font-bold">
                         <div className="flex items-center justify-center gap-2">
                           <span>TOTAL</span>
@@ -817,8 +825,8 @@ export function PortfolioTable({
                           <div className="text-xs text-muted-foreground mb-1 font-medium">Costo Total</div>
                           <FormatMonetaryValue
                             value={data.reduce((sum, asset) => sum + asset.costBasis, 0)}
-                            displayCurrency="USD"
-                            exchangeRate={null}
+                            displayCurrency={marketValueCurrencyState}
+                            exchangeRate={exchangeRate}
                             label="Total Costo"
                           />
                         </div>
@@ -831,10 +839,10 @@ export function PortfolioTable({
                               const effectivePrice = asset.isFrozen && asset.frozenPrice 
                                 ? asset.frozenPrice 
                                 : asset.currentPrice;
-                              const currentValue = effectivePrice * asset.quantity;
-                              return sum + (marketValueCurrencyState === 'MXN' && exchangeRate 
-                                ? currentValue * exchangeRate 
-                                : currentValue);
+                              const currentValueUSD = (asset.currency === 'MXN' && exchangeRate)
+                                ? (effectivePrice / exchangeRate) * asset.quantity
+                                : effectivePrice * asset.quantity;
+                              return sum + currentValueUSD;
                             }, 0)}
                             displayCurrency={marketValueCurrencyState}
                             exchangeRate={exchangeRate}
@@ -852,18 +860,18 @@ export function PortfolioTable({
                                 const effectivePrice = asset.isFrozen && asset.frozenPrice 
                                   ? asset.frozenPrice 
                                   : asset.currentPrice;
-                                return sum + (effectivePrice * asset.quantity);
+                                const valueUSD = (asset.currency === 'MXN' && exchangeRate)
+                                  ? (effectivePrice / exchangeRate) * asset.quantity
+                                  : effectivePrice * asset.quantity;
+                                return sum + valueUSD;
                               }, 0);
                               const totalPnL = totalCurrentValue - totalCostBasis;
                               const totalPnLPercentage = totalCostBasis > 0 ? (totalPnL / totalCostBasis) * 100 : 0;
-                              const displayPnL = marketValueCurrencyState === 'MXN' && exchangeRate 
-                                ? totalPnL * exchangeRate 
-                                : totalPnL;
                               
                               return (
                                 <>
                                   <FormatMonetaryValue
-                                    value={displayPnL}
+                                    value={totalPnL}
                                     displayCurrency={marketValueCurrencyState}
                                     exchangeRate={exchangeRate}
                                     label="Total P&L"

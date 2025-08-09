@@ -14,7 +14,7 @@ interface Stock {
   originalPurchasePrice?: number;
   lastUpdated?: string;
 }
-import { updatePortfolioPrices } from '../lib/finnhub-price-service';
+import { getBatchPrices } from '../lib/price-service';
 import { useToast } from './use-toast';
 
 interface AutoPriceUpdateState {
@@ -76,7 +76,17 @@ export function useAutoPriceUpdate(): UseAutoPriceUpdateReturn {
         variant: 'default',
       });
 
-      const { updatedPortfolio, results } = await updatePortfolioPrices(portfolio);
+      // Usar servicio unificado con caché y concurrencia controlada
+      const tickers = portfolio.map(s => s.ticker);
+      const map = await getBatchPrices(tickers, { preferred: 'finnhub', ttlMs: 60_000, concurrency: 6 });
+      const updatedPortfolio = portfolio.map(s => {
+        const entry = map.get(s.ticker.toUpperCase());
+        return entry ? { ...s, currentPrice: entry.price, lastUpdated: new Date().toISOString() } : s;
+      });
+      const results = portfolio.map(s => {
+        const entry = map.get(s.ticker.toUpperCase());
+        return entry ? { ticker: s.ticker, success: true } : { ticker: s.ticker, success: false, error: 'Sin precio' };
+      });
       
       // Contar éxitos y errores
       const successCount = results.filter(r => r.success).length;

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, 'Apple Color Emoji', 'Segoe UI Emoji';
 }
 
 @layer base {
@@ -85,4 +85,40 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Premium UX enhancements */
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background-color: hsl(var(--primary) / 0.25);
+  color: hsl(var(--foreground));
+}
+
+/* Subtle animated transitions for interactive elements */
+button, a, [role="button"], .card, .table-row {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, box-shadow 250ms ease, transform 200ms ease;
+}
+
+/* Modern scrollbar (WebKit-based browsers) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, hsl(var(--primary) / 0.35), hsl(var(--accent) / 0.35));
+  border-radius: 9999px;
+  border: 2px solid hsl(var(--background));
+}
+*::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 9999px;
+}
+
+/* Improve focus visibility */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
 }
