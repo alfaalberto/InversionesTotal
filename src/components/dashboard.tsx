@@ -35,15 +35,22 @@ interface DashboardProps {
 import { convertUSDToMXN } from '../lib/currency';
 
 export default function Dashboard({ initialData }: DashboardProps) {
+  const [exchangeRate, setExchangeRate] = React.useState<number | null>(17.5);
+  // Visualización del tipo de cambio Banxico
+  // (esto irá en el render, justo antes del contenido principal)
+  const exchangeRateBanner = (
+    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-4">
+      <span className="font-bold text-blue-900 text-lg">Tipo de cambio USD/MXN (Banxico):</span>
+      <span className="text-2xl font-mono text-blue-700">{exchangeRate ? `$${exchangeRate.toFixed(4)} MXN/USD` : 'Cargando...'}</span>
+    </div>
+  );
   console.log('🏦 Dashboard component rendered');
   const [portfolio, setPortfolio] = React.useState<Stock[]>(initialData);
   const [isLoading, setIsLoading] = React.useState(true);
   const [analysisReport, setAnalysisReport] = React.useState<any | null>(null);
   const [isAnalysisRunning, setIsAnalysisRunning] = React.useState(false);
   const { toast } = useToast();
-  // TEMPORAL: Hardcodeo el tipo de cambio para que funcione el toggle
-  const [exchangeRate, setExchangeRate] = React.useState<number | null>(17.5);
-  
+
   // Estado para los totales correctos calculados por la tabla del portafolio
   const [portfolioTotals, setPortfolioTotals] = React.useState<{
     totalCostBasis: number;

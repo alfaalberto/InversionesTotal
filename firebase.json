@@ -1,11 +1,42 @@
 {
-  "apphosting": {
-    "source": ".",
+  "apphosting": [
+    {
+      "source": ".",
+      "ignore": [
+        "node_modules",
+        ".git",
+        ".next",
+        "out"
+      ]
+    },
+    {
+      "backendId": "inversiones-total-app",
+      "rootDir": "/",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    }
+  ],
+  "hosting": {
+    "public": "public",
     "ignore": [
-      "node_modules",
-      ".git",
-      ".next",
-      "out"
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
     ]
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ]
 }

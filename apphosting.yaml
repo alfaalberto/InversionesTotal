@@ -1,47 +1,23 @@
-# Settings to manage and configure a Firebase App Hosting backend.
-# https://firebase.google.com/docs/app-hosting/configure
-
-# Force Node.js 22 for better webpack/postcss stability
-runtime: nodejs22
-
+# Settings for Backend (on Cloud Run).
+# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
-  maxInstances: 3
   minInstances: 0
-  concurrency: 80
-  cpu: 1
-  memoryMiB: 512
+  # maxInstances: 100
+  # concurrency: 80
+  # cpu: 1
+  # memoryMiB: 512
 
-env:
-  - variable: NODE_ENV
-    value: production
-  - variable: NODE_OPTIONS
-    value: --max_old_space_size=4096
-    availability:
-      - BUILD
-  - variable: BANXICO_API_TOKEN
-    secret: BANXICO_API_TOKEN
-    availability:
-      - BUILD
-      - RUNTIME
-  - variable: POLYGON_API_KEY
-    secret: POLYGON_API_KEY
-    availability:
-      - BUILD
-      - RUNTIME
-  - variable: NEXT_PUBLIC_POLYGON_API_KEY
-    secret: NEXT_PUBLIC_POLYGON_API_KEY
-    availability:
-      - BUILD
-      - RUNTIME
-  - variable: FINNHUB_API_KEY
-    secret: FINNHUB_API_KEY
-    availability:
-      - BUILD
-      - RUNTIME
-  - variable: NEXT_PUBLIC_FINNHUB_API_KEY
-    secret: NEXT_PUBLIC_FINNHUB_API_KEY
-    availability:
-      - BUILD
-      - RUNTIME
+# Environment variables and secrets.
+# env:
+  # Configure environment variables.
+  # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
+  # - variable: MESSAGE
+  #   value: Hello world!
+  #   availability:
+  #     - BUILD
+  #     - RUNTIME
+
+  # Grant access to secrets in Cloud Secret Manager.
+  # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
+  # - variable: MY_SECRET
+  #   secret: mySecretRef
