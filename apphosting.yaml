@@ -8,14 +8,22 @@ runConfig:
   # memoryMiB: 512
 
 # Environment variables and secrets.
-# env:
-  # Configure environment variables.
-  # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
-  # - variable: MESSAGE
-  #   value: Hello world!
-  #   availability:
-  #     - BUILD
-  #     - RUNTIME
+env:
+  - variable: POLYGON_API_KEY
+    value: idDkX7hO8GNMXhH0XGdgg5JpLBur_WAM
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: FINNHUB_API_KEY
+    value: d2a2mb9r01qvhsfvqsugd2a2mb9r01qvhsfvqsv0
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: BANXICO_API_TOKEN
+    value: 377d7e94499e81af4da6c658c018c17073d40ef3662a8dd4f5e74435134fa01b
+    availability:
+      - BUILD
+      - RUNTIME
 
   # Grant access to secrets in Cloud Secret Manager.
   # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
